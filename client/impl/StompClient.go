@@ -51,6 +51,7 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel chan []by
 					} else {
 						log.Error("Subscription timed out, renewing...")
 						_ = s.SubscribeToQueue(queueName, c)
+						log.Debug("Created new subscription")
 						break
 					}
 					log.Debug("Conversion successful")

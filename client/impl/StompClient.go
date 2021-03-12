@@ -35,7 +35,7 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel chan []by
 			log.Debug("Subscription was successful, adding it to list")
 			s.subscriptions[queueName] = sub
 			log.Debug("Starting go function to convert from a stomp specific channel to chan []byte ")
-			go func(subscription *stomp.Subscription, c chan []byte) {
+			go func(subscription *stomp.Subscription, c chan []byte, s *StompClient) {
 				for {
 					log.Debug("Trying to convert")
 					val := <-subscription.C
@@ -48,7 +48,7 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel chan []by
 					}
 					log.Debug("Conversion successful")
 				}
-			}(sub, messageChanel)
+			}(sub, messageChanel, s)
 			log.Debug("Function started")
 			return nil
 		}

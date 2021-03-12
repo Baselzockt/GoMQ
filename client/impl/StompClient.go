@@ -34,7 +34,7 @@ func (s *StompClient) Connect(url string) error {
 	return err
 }
 
-func (s *StompClient) SubscribeToQueue(queueName string, messageChanel chan []byte) error {
+func (s *StompClient) SubscribeToQueue(queueName string, messageChanel *chan []byte) error {
 	log.Debug("Trying to subscribe to: " + queueName)
 	if s.conn != nil {
 		sub, err := s.conn.Subscribe(queueName, stomp.AckAuto)
@@ -42,12 +42,13 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel chan []by
 			log.Debug("Subscription was successful, adding it to list")
 			s.subscriptions[queueName] = sub
 			log.Debug("Starting go function to convert from a stomp specific channel to chan []byte ")
-			go func(subscription *stomp.Subscription, c chan []byte, s *StompClient) {
+			go func(subscription *stomp.Subscription, c *chan []byte, s *StompClient) {
+				tmp := *c
 				for {
 					log.Debug("Trying to convert")
 					val := <-subscription.C
 					if val != nil {
-						c <- val.Body
+						tmp <- val.Body
 					} else {
 						log.Error("Subscription timed out, renewing...")
 						_ = s.SubscribeToQueue(queueName, c)

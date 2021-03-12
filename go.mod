@@ -1,4 +1,4 @@
-module GoMQ
+module github.com/Baselzockt/GoMQ
 go 1.16
 
 require (

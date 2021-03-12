@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"github.com/Baselzockt/GoMQ/client/impl"
-	"github.com/Baselzockt/GoMQ/content"
+	"github.com/Baselzockt/GoMQ/GoMQ/client/impl"
+	"github.com/Baselzockt/GoMQ/GoMQ/content"
 	"testing"
 )
 

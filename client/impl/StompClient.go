@@ -4,13 +4,12 @@ import (
 	"errors"
 	"github.com/go-stomp/stomp"
 	log "github.com/sirupsen/logrus"
-	"net"
-	"time"
 )
 
 type StompClient struct {
 	conn          *stomp.Conn
 	subscriptions map[string]*stomp.Subscription
+	url           string
 }
 
 func NewStompClient() *StompClient {
@@ -18,16 +17,12 @@ func NewStompClient() *StompClient {
 }
 
 func (s *StompClient) Connect(url string) error {
-	netConn, err0 := net.DialTimeout("tcp", url, 10*time.Hour)
-	if err0 != nil {
-		return err0
-	}
-
+	s.url = url
 	log.Debug("Setting up subscription map")
 	s.subscriptions = map[string]*stomp.Subscription{}
 	var err error
 	log.Debug("trying to connect to: " + url)
-	s.conn, err = stomp.Connect(netConn)
+	s.conn, err = stomp.Dial("tcp", url)
 	if err == nil {
 		log.Debug("Successfully connected")
 	}
@@ -52,6 +47,8 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel *chan []b
 						tmp <- val.Body
 					} else {
 						log.Error("Subscription timed out, renewing...")
+						s.conn.Disconnect()
+						s.conn, _ = stomp.Dial("tcp", s.url)
 						err = s.SubscribeToQueue(queueName, c)
 						if err != nil {
 							log.Fatal(err)

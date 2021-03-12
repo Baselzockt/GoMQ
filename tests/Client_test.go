@@ -1,9 +1,9 @@
 package tests
 
 import (
+	"github.com/Baselzockt/GoMQ/client/impl"
+	"github.com/Baselzockt/GoMQ/content"
 	"testing"
-	content "twitterApiTest/activeMQ"
-	"twitterApiTest/activeMQ/client/impl"
 )
 
 func TestSendMessage(t *testing.T) {

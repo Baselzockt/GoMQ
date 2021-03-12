@@ -10,7 +10,7 @@ func TestSendMessage(t *testing.T) {
 	var client = impl.NewMockClient()
 	client.Connect("test")
 	want := "test"
-	client.SendMessageToQueue("test",content.TEXT,[]byte(want))
+	client.SendMessageToQueue("test", content.TEXT, []byte(want))
 	got := string(client.GetMessages()[0])
 	client.Disconnect()
 
@@ -27,7 +27,7 @@ func TestSendMessage(t *testing.T) {
 	}
 
 	if got != want {
-		t.Errorf("Got %s want %s",got,want)
+		t.Errorf("Got %s want %s", got, want)
 	}
 
 }
@@ -35,11 +35,11 @@ func TestSendMessage(t *testing.T) {
 func TestReceivingMessage(t *testing.T) {
 	var client = impl.NewMockClient()
 	want := "test"
-	client.SendMessageToQueue("test",content.TEXT,[]byte(want))
+	client.SendMessageToQueue("test", content.TEXT, []byte(want))
 	channel := make(chan []byte)
-	client.SubscribeToQueue("test",channel)
+	client.SubscribeToQueue("test", channel)
 
-	got := string(<- channel)
+	got := string(<-channel)
 
 	if client.GetCalls()[0] != "Sent message" {
 		t.Errorf("Could not send message")
@@ -50,7 +50,6 @@ func TestReceivingMessage(t *testing.T) {
 	}
 
 	if got != want {
-		t.Errorf("Got %s want %s",got,want)
+		t.Errorf("Got %s want %s", got, want)
 	}
 }
-

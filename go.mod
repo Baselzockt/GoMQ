@@ -1,1 +1,1 @@
-module "GoMQ"
+module "github.com/Baselzockt/GoMQ"

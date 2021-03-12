@@ -52,7 +52,10 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel *chan []b
 						tmp <- val.Body
 					} else {
 						log.Error("Subscription timed out, renewing...")
-						_ = s.SubscribeToQueue(queueName, c)
+						err = s.SubscribeToQueue(queueName, c)
+						if err != nil {
+							log.Fatal(err)
+						}
 						log.Debug("Created new subscription")
 						break
 					}

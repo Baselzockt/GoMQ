@@ -42,7 +42,7 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel chan []by
 					if val != nil {
 						c <- val.Body
 					} else {
-						log.Debug("Subscription timed out, renewing...")
+						log.Error("Subscription timed out, renewing...")
 						_ = s.SubscribeToQueue(queueName, c)
 						break
 					}
@@ -54,6 +54,7 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel chan []by
 		}
 		return err
 	}
+	log.Error("Client was nil")
 	return errors.New("client was nil")
 }
 
@@ -63,6 +64,7 @@ func (s *StompClient) Unsubscribe(queueName string) error {
 		log.Debug("Unsubscribing")
 		return s.subscriptions[queueName].Unsubscribe()
 	}
+	log.Error("no subscriptions available")
 	return errors.New("no subscriptions available")
 }
 

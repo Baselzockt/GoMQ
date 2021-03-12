@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/go-stomp/stomp"
 	log "github.com/sirupsen/logrus"
+	"net"
+	"time"
 )
 
 type StompClient struct {
@@ -16,11 +18,16 @@ func NewStompClient() *StompClient {
 }
 
 func (s *StompClient) Connect(url string) error {
+	netConn, err0 := net.DialTimeout("tcp", url, 10*time.Hour)
+	if err0 != nil {
+		return err0
+	}
+
 	log.Debug("Setting up subscription map")
 	s.subscriptions = map[string]*stomp.Subscription{}
 	var err error
 	log.Debug("trying to connect to: " + url)
-	s.conn, err = stomp.Dial("tcp", url)
+	s.conn, err = stomp.Connect(netConn)
 	if err == nil {
 		log.Debug("Successfully connected")
 	}

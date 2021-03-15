@@ -20,13 +20,16 @@ func (s *StompClient) Connect(url string) error {
 	s.url = url
 	log.Debug("Setting up subscription map")
 	s.subscriptions = map[string]*stomp.Subscription{}
-	var err error
-	log.Debug("trying to connect to: " + url)
-	s.conn, err = stomp.Dial("tcp", url)
-	if err == nil {
-		log.Debug("Successfully connected")
+	if s.conn == nil {
+		var err error
+		log.Debug("trying to connect to: " + url)
+		s.conn, err = stomp.Dial("tcp", url)
+		if err == nil {
+			log.Debug("Successfully connected")
+		}
+		return err
 	}
-	return err
+	return nil
 }
 
 func (s *StompClient) SubscribeToQueue(queueName string, messageChanel *chan []byte) error {
@@ -39,7 +42,6 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel *chan []b
 			log.Debug("Starting go function to convert from a stomp specific channel to chan []byte ")
 			go func(subscription *stomp.Subscription, c *chan []byte, s *StompClient) {
 				tmp := *c
-				tmp <- []byte("FLUSH")
 				for {
 					log.Debug("Trying to convert")
 					val := <-subscription.C
@@ -90,7 +92,13 @@ func (s *StompClient) Disconnect() error {
 func (s *StompClient) SendMessageToQueue(queueName, contentType string, body []byte) error {
 	log.Debug("Trying to send message to Queue")
 	if s.conn != nil {
-		return s.conn.Send(queueName, contentType, body)
+		err := s.conn.Send(queueName, contentType, body)
+		if err == stomp.ErrAlreadyClosed {
+			log.Debug("ActiveMQ Connection is in closed state. Reconnecting ...")
+			s.conn, _ = stomp.Dial("tcp", s.url)
+			return s.conn.Send(queueName, contentType, body)
+		}
+		return err
 	}
 	return errors.New("client was nil")
 }

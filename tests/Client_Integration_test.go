@@ -11,7 +11,7 @@ func TestSendAndReceive(t *testing.T) {
 	err := client.Connect("localhost:61613")
 	checkForError(t, err)
 	channel := make(chan []byte)
-	err = client.SubscribeToQueue("test", channel)
+	err = client.SubscribeToQueue("test", &channel)
 	checkForError(t, err)
 	want := "Integration test :D"
 	client.SendMessageToQueue("test", content.TEXT, []byte(want))

@@ -74,7 +74,10 @@ func (s *StompClient) Unsubscribe(queueName string) error {
 	log.Debug("Trying to unsubscribe from queue: " + queueName)
 	if s.subscriptions != nil {
 		log.Debug("Unsubscribing")
-		return s.subscriptions[queueName].Unsubscribe()
+		if s.subscriptions[queueName] != nil {
+			return s.subscriptions[queueName].Unsubscribe()
+		}
+		return errors.New("not subscribed to: " + queueName)
 	}
 	log.Error("no subscriptions available")
 	return errors.New("no subscriptions available")

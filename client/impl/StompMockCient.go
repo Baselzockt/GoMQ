@@ -1,6 +1,9 @@
 package impl
 
-import "github.com/go-stomp/stomp/testutil"
+import (
+	"errors"
+	"github.com/go-stomp/stomp/testutil"
+)
 
 type StompMockClient struct {
 	conn           *testutil.FakeConn
@@ -17,6 +20,9 @@ func NewStompMockClient(conn *testutil.FakeConn) *StompMockClient {
 
 func (s *StompMockClient) Connect(url string) error {
 	s.url = url
+	if s.conn.RemoteAddr().String() != url {
+		return errors.New("could not connect")
+	}
 	s.calls = append(s.calls, "Connect to: "+url)
 	s.messageChanel = map[string]*chan []byte{}
 	s.closingChannel = make(chan bool)

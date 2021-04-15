@@ -75,12 +75,18 @@ func TestReceivingMessage(t *testing.T) {
 
 		got := string(<-channel)
 
+		client.Unsubscribe("test")
+
 		if client.GetCalls()[0] != "Sent message" {
 			t.Errorf("Could not send message")
 		}
 
 		if client.GetCalls()[1] != "Subscribe to test" {
 			t.Errorf("Could not subscribe to queue")
+		}
+
+		if client.GetCalls()[2] != "Unsubscribe from test" {
+			t.Errorf("Could not unsubscribe")
 		}
 
 		if got != want {
@@ -98,11 +104,16 @@ func TestReceivingMessage(t *testing.T) {
 		client.SubscribeToQueue("test", &channel)
 
 		got := string(<-channel)
-
+		client.Unsubscribe("test")
 		assertNoError(t, client.Disconnect())
+		assertError(t, client.Connect("wroooooooong"))
 
 		if client.GetCalls()[2] != "Subscribe to: test" {
 			t.Errorf("Could not subscribe to queue")
+		}
+
+		if client.GetCalls()[3] != "Unsubscribe from test" {
+			t.Errorf("Could not unsubscribe got: %s", client.GetCalls()[3])
 		}
 
 		if got != want {

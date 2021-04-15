@@ -20,9 +20,9 @@ func (m *MockClient) Disconnect() error {
 	return nil
 }
 
-func (m *MockClient) SubscribeToQueue(queueName string, messageChanel chan []byte) error {
+func (m *MockClient) SubscribeToQueue(queueName string, messageChanel *chan []byte) error {
 	m.calls = append(m.calls, "Subscribe to "+queueName)
-	m.messageChanel[queueName] = messageChanel
+	m.messageChanel[queueName] = *messageChanel
 	return nil
 }
 

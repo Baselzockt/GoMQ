@@ -11,7 +11,7 @@ import (
 func TestSendMessage(t *testing.T) {
 	t.Run("MOCK", func(t *testing.T) {
 		var client = impl.NewMockClient()
-		client.Connect("test")
+		client.Connect()
 		want := "test"
 		client.SendMessageToQueue("test", content.TEXT, []byte(want))
 
@@ -71,7 +71,7 @@ func TestReceivingMessage(t *testing.T) {
 		want := "test"
 		client.SendMessageToQueue("test", content.TEXT, []byte(want))
 		channel := make(chan []byte)
-		client.SubscribeToQueue("test", channel)
+		client.SubscribeToQueue("test", &channel)
 
 		got := string(<-channel)
 
@@ -121,8 +121,8 @@ func TestReceivingMessage(t *testing.T) {
 		}
 	})
 	t.Run("STOMP negative test", func(t *testing.T) {
-		var client = impl.NewStompClient()
-		assertError(t, client.Connect("wrooooooooooong"))
+		var client = impl.StompClient{Url: "wrooooooooooong"}
+		assertError(t, client.Connect())
 		assertError(t, client.SendMessageToQueue("test", content.TEXT, []byte("Wrooong")))
 		assertError(t, client.SubscribeToQueue("test", nil))
 		assertError(t, client.Disconnect())

@@ -7,8 +7,8 @@ import (
 )
 
 func TestSendAndReceive(t *testing.T) {
-	client := impl.StompClient{}
-	err := client.Connect("localhost:61613")
+	client := impl.StompClient{Url: "localhost:61613"}
+	err := client.Connect()
 	checkForError(t, err)
 	channel := make(chan []byte)
 	err = client.SubscribeToQueue("test", &channel)

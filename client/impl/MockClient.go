@@ -14,12 +14,12 @@ func NewMockClient() *MockClient {
 	return &MockClient{[]string{}, [][]byte{}, map[string]chan []byte{}, false, false}
 }
 
-func (m *MockClient) Connect(url string) error {
+func (m *MockClient) Connect() error {
 	if m.errorOnConnect {
 		return errors.New("could not connect")
 	}
 
-	m.calls = append(m.calls, "Connect to "+url)
+	m.calls = append(m.calls, "Connect")
 	m.connected = true
 	return nil
 }

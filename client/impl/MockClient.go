@@ -3,17 +3,22 @@ package impl
 import "errors"
 
 type MockClient struct {
-	calls         []string
-	messages      [][]byte
-	messageChanel map[string]chan []byte
-	connected     bool
+	calls          []string
+	messages       [][]byte
+	messageChanel  map[string]chan []byte
+	connected      bool
+	errorOnConnect bool
 }
 
 func NewMockClient() *MockClient {
-	return &MockClient{[]string{}, [][]byte{}, map[string]chan []byte{}, false}
+	return &MockClient{[]string{}, [][]byte{}, map[string]chan []byte{}, false, false}
 }
 
 func (m *MockClient) Connect(url string) error {
+	if m.errorOnConnect {
+		return errors.New("could not connect")
+	}
+
 	m.calls = append(m.calls, "Connect to "+url)
 	m.connected = true
 	return nil
@@ -45,6 +50,10 @@ func (m *MockClient) Unsubscribe(queueName string) error {
 	close(m.messageChanel[queueName])
 	delete(m.messageChanel, queueName)
 	return nil
+}
+
+func (m *MockClient) SetErrorOnReconnect(errorOnConnect bool) {
+	m.errorOnConnect = errorOnConnect
 }
 
 func (m *MockClient) SendMessageToQueue(queueName, contentType string, body []byte) error {

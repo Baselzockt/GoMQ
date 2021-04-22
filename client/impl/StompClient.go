@@ -9,27 +9,33 @@ import (
 type StompClient struct {
 	conn          *stomp.Conn
 	subscriptions map[string]*stomp.Subscription
-	url           string
+	Url           string
 }
 
-func NewStompClient() *StompClient {
-	return &StompClient{}
+func (s *StompClient) Connect() error {
+	if s.conn != nil {
+		return nil
+	}
+
+	var err error
+	log.Debug("trying to connect to: " + s.Url)
+	s.conn, err = stomp.Dial("tcp", s.Url)
+	return err
 }
 
-func (s *StompClient) Connect(url string) error {
-	s.url = url
-	log.Debug("Setting up subscription map")
-	s.subscriptions = map[string]*stomp.Subscription{}
-	if s.conn == nil {
-		var err error
-		log.Debug("trying to connect to: " + url)
-		s.conn, err = stomp.Dial("tcp", url)
-		if err == nil {
-			log.Debug("Successfully connected")
-		}
+func (s *StompClient) Disconnect() error {
+	log.Debug("Trying to disconnect")
+	if s.conn != nil {
+		err := s.conn.Disconnect()
+		s.conn = nil
 		return err
 	}
 	return nil
+}
+
+func (s *StompClient) reconnect() error {
+	s.Disconnect()
+	return s.Connect()
 }
 
 func (s *StompClient) SubscribeToQueue(queueName string, messageChanel *chan []byte) error {
@@ -50,7 +56,7 @@ func (s *StompClient) SubscribeToQueue(queueName string, messageChanel *chan []b
 					} else {
 						log.Error("Subscription timed out, renewing...")
 						s.conn.Disconnect()
-						s.conn, _ = stomp.Dial("tcp", s.url)
+						s.conn, _ = stomp.Dial("tcp", s.Url)
 						err = s.SubscribeToQueue(queueName, c)
 						if err != nil {
 							log.Fatal(err)
@@ -83,25 +89,29 @@ func (s *StompClient) Unsubscribe(queueName string) error {
 	return errors.New("no subscriptions available")
 }
 
-func (s *StompClient) Disconnect() error {
-	log.Debug("Trying to disconnect")
-	if s.conn != nil {
-		return s.conn.Disconnect()
-	}
-	log.Error("Could not disconnect since there was no connection")
-	return errors.New("client was nil")
-}
-
 func (s *StompClient) SendMessageToQueue(queueName, contentType string, body []byte) error {
-	log.Debug("Trying to send message to Queue")
-	if s.conn != nil {
-		err := s.conn.Send(queueName, contentType, body)
-		if err == stomp.ErrAlreadyClosed {
-			log.Debug("ActiveMQ Connection is in closed state. Reconnecting ...")
-			s.conn, _ = stomp.Dial("tcp", s.url)
-			return s.conn.Send(queueName, contentType, body)
+	err := s.sendMessageToQueue(queueName, contentType, body)
+
+	switch err {
+	case nil:
+		return nil
+	case stomp.ErrAlreadyClosed:
+		err := s.reconnect()
+		if err != nil {
+			return err
 		}
+		return s.sendMessageToQueue(queueName, contentType, body)
+	default:
 		return err
 	}
-	return errors.New("client was nil")
+}
+
+func (s *StompClient) sendMessageToQueue(queueName, contentType string, body []byte) error {
+	log.Debug("Trying to send message to Queue")
+	err := s.Connect()
+	if err != nil {
+		return err
+	}
+
+	return s.conn.Send(queueName, contentType, body)
 }

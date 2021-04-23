@@ -18,7 +18,7 @@ func TestSendMessage(t *testing.T) {
 		got := string(client.GetMessages()[0])
 		client.Disconnect()
 
-		if client.GetCalls()[0] != "Connect to test" {
+		if client.GetCalls()[0] != "Connect" {
 			t.Errorf("Did not connect")
 		}
 
@@ -36,8 +36,8 @@ func TestSendMessage(t *testing.T) {
 	})
 	t.Run("STOMP", func(t *testing.T) {
 		cl, svr := testutil.NewFakeConn(&check.C{})
-		var client = impl.NewStompMockClient(cl)
-		assertNoError(t, client.Connect(svr.LocalAddr().String()))
+		var client = impl.StompMockClient{Url: svr.LocalAddr().String(), Conn: cl}
+		assertNoError(t, client.Connect())
 
 		want := "test"
 		assertNoError(t, client.SendMessageToQueue("test", content.TEXT, []byte(want)))
@@ -69,23 +69,27 @@ func TestReceivingMessage(t *testing.T) {
 	t.Run("MOCK", func(t *testing.T) {
 		var client = impl.NewMockClient()
 		want := "test"
-		client.SendMessageToQueue("test", content.TEXT, []byte(want))
+		err := client.Connect()
+		assertNoError(t, err)
+		err = client.SendMessageToQueue("test", content.TEXT, []byte(want))
+		assertNoError(t, err)
 		channel := make(chan []byte)
-		client.SubscribeToQueue("test", &channel)
+		err = client.SubscribeToQueue("test", &channel)
+		assertNoError(t, err)
 
 		got := string(<-channel)
 
 		client.Unsubscribe("test")
 
-		if client.GetCalls()[0] != "Sent message" {
+		if client.GetCalls()[1] != "Sent message" {
 			t.Errorf("Could not send message")
 		}
 
-		if client.GetCalls()[1] != "Subscribe to test" {
+		if client.GetCalls()[2] != "Subscribe to test" {
 			t.Errorf("Could not subscribe to queue")
 		}
 
-		if client.GetCalls()[2] != "Unsubscribe from test" {
+		if client.GetCalls()[3] != "Unsubscribe from test" {
 			t.Errorf("Could not unsubscribe")
 		}
 
@@ -95,18 +99,22 @@ func TestReceivingMessage(t *testing.T) {
 	})
 	t.Run("STOMP", func(t *testing.T) {
 		cl, svr := testutil.NewFakeConn(&check.C{})
-		var client = impl.NewStompMockClient(cl)
-		assertNoError(t, client.Connect(svr.LocalAddr().String()))
+		var client = impl.StompMockClient{Url: svr.LocalAddr().String(), Conn: cl}
+		assertNoError(t, client.Connect())
 
 		want := "test"
 		assertNoError(t, client.SendMessageToQueue("test", content.TEXT, []byte(want)))
 		channel := make(chan []byte)
-		client.SubscribeToQueue("test", &channel)
+		err := client.SubscribeToQueue("test", &channel)
+		assertNoError(t, err)
 
 		got := string(<-channel)
-		client.Unsubscribe("test")
+		err = client.Unsubscribe("test")
+		assertNoError(t, err)
 		assertNoError(t, client.Disconnect())
-		assertError(t, client.Connect("wroooooooong"))
+
+		client2 := impl.StompMockClient{Url: "wroooong", Conn: cl}
+		assertError(t, client2.Connect())
 
 		if client.GetCalls()[2] != "Subscribe to: test" {
 			t.Errorf("Could not subscribe to queue")

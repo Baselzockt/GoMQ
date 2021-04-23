@@ -6,24 +6,19 @@ import (
 )
 
 type StompMockClient struct {
-	conn           *testutil.FakeConn
-	url            string
+	Conn           *testutil.FakeConn
+	Url            string
 	calls          []string
 	messages       [][]byte
 	messageChanel  map[string]*chan []byte
 	closingChannel chan bool
 }
 
-func NewStompMockClient(conn *testutil.FakeConn) *StompMockClient {
-	return &StompMockClient{conn: conn}
-}
-
-func (s *StompMockClient) Connect(url string) error {
-	s.url = url
-	if s.conn.RemoteAddr().String() != url {
+func (s *StompMockClient) Connect() error {
+	if s.Conn.RemoteAddr().String() != s.Url {
 		return errors.New("could not connect")
 	}
-	s.calls = append(s.calls, "Connect to: "+url)
+	s.calls = append(s.calls, "Connect to: "+s.Url)
 	s.messageChanel = map[string]*chan []byte{}
 	s.closingChannel = make(chan bool)
 	go func() {
@@ -33,7 +28,7 @@ func (s *StompMockClient) Connect(url string) error {
 				break
 			default:
 				var msg []byte
-				_, err := s.conn.Read(msg)
+				_, err := s.Conn.Read(msg)
 				if err != nil {
 					break
 				}
@@ -46,7 +41,7 @@ func (s *StompMockClient) Connect(url string) error {
 }
 
 func (s *StompMockClient) Disconnect() error {
-	err := s.conn.Close()
+	err := s.Conn.Close()
 	s.closingChannel <- true
 	s.calls = append(s.calls, "Disconnect")
 	return err

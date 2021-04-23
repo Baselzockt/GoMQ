@@ -58,7 +58,7 @@ func (m *MockClient) SetErrorOnReconnect(errorOnConnect bool) {
 
 func (m *MockClient) SendMessageToQueue(queueName, contentType string, body []byte) error {
 	if !m.connected {
-		return errors.New("client not connected")
+		return nil
 	}
 
 	m.calls = append(m.calls, "Sent message")
